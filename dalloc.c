@@ -35,7 +35,7 @@ void *dalloc(size_t size)
 		return NULL;	// No memory
 
 	// Insert the header
-	header = (header *)block;
+	header = (header_t *)block;
 	header->s.size = aligned_size;	// How much space will be freed up when you make it free in the future?
 	header->s.is_free = 0;
 	header->s.next = NULL;	// Not linked to a list atm.
