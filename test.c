@@ -4,7 +4,7 @@
 int main()
 {
 	/*
-	printf("--- dalloc Stage 1 Test ---\n ");
+	printf("*** dalloc Stage 1 Test ***\n ");
 
 	// 1. Allocate 10 byte
 	void *p1 = dalloc(10);
@@ -29,9 +29,11 @@ int main()
     else
     	printf("p1 is not aligned! (%p)\n", p1);
 	*/
-	////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////
 
-	printf("--- dalloc Stage 2: Free & Reuse ---\n");
+	/*
+	printf("*** dalloc Stage 2: Free & Reuse ***\n");
 
 	// 1. Allocate spaces
 	void *p1 = dalloc(10);
@@ -53,6 +55,39 @@ int main()
 	    printf("The old address has been reused (Recycled)!..\n");
 	else
 		printf("It didn't work as expected. New area allocated!..\n");
-		
-	return 0;
+	*/
+
+	//////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////
+
+	printf("*** dalloc Stage 3: Coalescing ***\n");
+	
+    // Allocate 3 adjacent block
+    void *p1 = dalloc(16);
+    void *p2 = dalloc(16);
+    void *p3 = dalloc(16); // p3 is barrier.
+    
+    printf("p1: %p (16 byte)\n", p1);
+    printf("p2: %p (16 byte)\n", p2);
+    printf("p3: %p (16 byte) [Barrier]\n", p3);
+
+    // Free up p1 and p2
+    dfree(p1);
+    dfree(p2);
+    // Two adjacent free spaces created in memory.: [FREE 16] [FREE 16] [USED p3]
+    printf("*** p1 ve p2 freed  ***\n");
+
+    // Normally, if we request 32 bytes, p1 (16) and p2 (16) alone is not enough (16)
+    // If Coalesce works: p1 + Header + p2 will combine to form a huge block. 
+    // And dalloc will give us back the address of p1.
+    void *pBigBlock = dalloc(32); 
+    printf("Request for a big block (32 byte)...\n");
+    printf("pBigBlock: %p\n", pBigBlock);
+
+    if (pBigBlock == p1)
+    	printf("Freed blocks successfully merged.\n");
+    else
+    	printf("It didn't work as expected. New space allocated or another block from the free list has been given.\n");
+
+    return 0;
 }

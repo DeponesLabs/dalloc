@@ -9,85 +9,113 @@ typedef union header {
 	struct {
 		size_t size; 		// Allocation Size 
 		unsigned is_free;
-		union header *next;
-	} s;
+		union header *pNext;
+	} data;
 	unsigned __int128 alignment_enforcer;
 } header_t;
 
 #define ALIGNMENT 16
 #define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~(ALIGNMENT-1))
 
-header_t *head = NULL;
-header_t *tail = NULL;
+header_t *pHead = NULL;
+header_t *pTail = NULL;
 
 pthread_mutex_t global_malloc_lock;
 
-header_t *get_free_block(size_t size) 
+static header_t *get_free_block(size_t size) 
 {
-    header_t *curr = head;
+    header_t *pCurr = pHead;
 
-    while (curr) {
-        if (curr->s.is_free && curr->s.size >= size) 
-            return curr;
-        curr = curr->s.next;
+    while (pCurr) {
+        if (pCurr->data.is_free && pCurr->data.size >= size) 
+            return pCurr;
+            
+        pCurr = pCurr->data.pNext;
     }
     
     return NULL;
 }
 
+// Walks the list from the beginning to the end
+// If it finds two adjacent 'freed' blocks, it merges them
+static void coalesce()
+{
+	header_t *pCurr = pHead;
+
+	while (pCurr && pCurr->data.pNext) {
+		// If the current one and the next one are free
+		if (pCurr->data.is_free && pCurr->data.pNext->data.is_free) {
+			// New size = Current one's size + next one's header + next one's size
+			pCurr->data.size += sizeof(header_t) + pCurr->data.pNext->data.size;
+			// Remove the next one from the list
+			pCurr->data.pNext = pCurr->data.pNext->data.pNext;
+		}
+		else
+		 	// Walk to the next one if there is no merge
+			pCurr = pCurr->data.pNext;
+	}
+}
+
 void *dalloc(size_t size)
 {
 	size_t total_size;
-	void *block;
-	header_t *header;
+	void *pBlock;
+	header_t *pHeader;
 
 	if (size == 0)
 		return NULL;
 
-	// Align the user's memory request and add header margin
-	// The header is already aligned thanks to the union, only aligning the size
+	// Align the user's memory request and add pHeader margin
+	// The pHeader is already aligned thanks to the union, only aligning the size
 	size_t aligned_size = ALIGN(size);
 	total_size = sizeof(header_t) + aligned_size;
 
-	header = get_free_block(aligned_size);
 
-	if (header) {
+	// Search in the free list for recycled space
+	if ((pHeader = get_free_block(aligned_size)) != NULL) {
 		// Found available space in free list
-		header->s.is_free = 0;
-		return (void*)(header + 1);
+		pHeader->data.is_free = 0;
+		return (void*)(pHeader + 1);
 	}
 
-	// If no available space in free list, request it from OS using sbrk() sys-call
-	block = sbrk(total_size);
-	if (block == (void *) -1)
+	coalesce();
+
+	// Search in the free list for recycled space
+	if ((pHeader = get_free_block(aligned_size)) != NULL) {
+		// Found available space in free list
+		pHeader->data.is_free = 0;
+		return (void*)(pHeader + 1);
+	}
+
+	// If there is no available space in free list, request it from OS using sbrk() sys-call
+	if ((pBlock = sbrk(total_size)) == (void *) -1)
 		return NULL;
 
-	// Create header with new block
-	header = (header_t *)block;
-	header->s.size = aligned_size;	// How much space will be freed up when it is freed in the future?
-	header->s.is_free = 0;
-	header->s.next = NULL;	// Not linked to a list at the moment.
+	// Create pHeader with new pBlock
+	pHeader = (header_t *)pBlock;
+	pHeader->data.size = aligned_size;	// How much space will be freed up when it is freed in the future?
+	pHeader->data.is_free = 0;
+	pHeader->data.pNext = NULL;
 
-	// Add new block into free (linked) list
-	if (!head)
-		head = header;	// Add as first element
+	// Add new pBlock into free (linked) list
+	if (!pHead)
+		pHead = pHeader;	// Add as first element
 
-	if (tail)
-		tail->s.next = header;	// Link to the end of the old
+	if (pTail)
+		pTail->data.pNext = pHeader;	// Link to the end of the old
 
-	tail = header; 	// Update tail
-	
-	// return the address after header
-	return (void*)(header + 1);
+	pTail = pHeader; 	// Update pTail
+	// return the address after pHeader
+	return (void*)(pHeader + 1);
 }
 
-void dfree(void *ptr)
+void dfree(void *pBlock)
 {
-	if (!ptr)
+	if (!pBlock)
 		return;
 
-	// 1. Go back to header using pointer arithmetic
-	// We gave the user (header + 1), now we are returning 1.
-	header_t *header = (header_t *)ptr - 1;
-	header->s.is_free = 1;
+	// Go back to pHeader using pointer arithmetic
+	// We gave the user (pHeader + 1), now we are returning 1.
+	header_t *pHeader = (header_t *)pBlock - 1;
+	pHeader->data.is_free = 1;
 }
