@@ -60,6 +60,7 @@ int main()
 	//////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////
 
+	/*
 	printf("*** dalloc Stage 3: Coalescing ***\n");
 	
     // Allocate 3 adjacent block
@@ -89,5 +90,52 @@ int main()
     else
     	printf("It didn't work as expected. New space allocated or another block from the free list has been given.\n");
 
+	*/
+
+	//////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////
+
+	printf("*** dalloc Stage 4: Splitting ***\n");
+	
+    // Request a big block
+    printf("1. Request for a big block (256 byte)...\n");
+    void *pBigBlock = dalloc(256);
+    printf("pBigBlock: %p\n", pBigBlock);
+
+    // Free big block
+    dfree(pBigBlock);
+    printf("*** pBigBlock Free edildi ***\n");
+
+    // Request small block
+    printf("2. Small block requested (32 byte)...\n");
+    void *pSmallBlock1 = dalloc(32);
+    printf("pSmallBlock1: %p\n", pSmallBlock1);
+
+    // Check if the address is same?
+    if (pSmallBlock1 == pBigBlock)
+        printf("Address is same (Reuse OK).\n");
+    else
+        printf("It didn't work as expected. Address is different!\n");
+    
+    // 4. İkinci küçük parçayı iste
+    // EĞER SPLIT ÇALIŞIYORSA:
+    // Bu istek için sbrk çağrılmamalı, p_big'in artan kısmından verilmeli.
+    // Adresi de p_small1 + 32 + Header kadar ileride olmalı.
+
+    // Request second small block
+    printf("3. Requesting second small block (32 byte)...\n");
+    void *pSmallBlock2 = dalloc(32);
+    printf("pSmallBlock2: %p\n", pSmallBlock2);
+
+    // Calc diff
+    long diff = (char*)pSmallBlock2 - (char*)pSmallBlock1;
+    printf("Diff: %ld byte\n", diff);
+
+    // Header(32) + Data(32) = Diff must be 64 byte
+    if (diff >= 48 && diff <= 80)	// Check it in a tolerated manner. Consider alignment
+        printf("Block found. Extra part is used.\n");
+    else
+        printf("It didn't work as expected. Diff is larger than it should be. A new sbrk syscall may have been done");
+       
     return 0;
 }

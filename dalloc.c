@@ -56,6 +56,34 @@ static void coalesce()
 	}
 }
 
+static void split_block(header_t *pBlock, size_t size)
+{
+	// block->data.size: The currently available large size (e.g., 1024)
+	// size: The size requested by the user (e.g., 32)
+
+	// Is there enough space to split?
+	if (pBlock->data.size >= size + sizeof(header_t) + ALIGNMENT) {
+		// Create a new pointer for the extra portion
+		// Address calculation: Existing Header + Header Size + Data Size to be used
+		header_t *pNewBlock = (header_t *)((void *)pBlock + sizeof(header_t) + size);
+
+		// Set new block's data
+		// New size = old total size - (Used + Header)
+		pNewBlock->data.size = pBlock->data.size - size - sizeof(header_t);
+		pNewBlock->data.is_free = 1;	// Free
+		pNewBlock->data.pNext = pBlock->data.pNext; 
+
+		// Set data of splitted block before sending it to the user
+		pBlock->data.size = size;
+		pBlock->data.is_free = 0;	// Allocating by dalloc
+		pBlock->data.pNext = pNewBlock;	// pNewBlock is next to the block requested (and splitted) by the user.
+
+		// If tail was pBlock before user's memory  request and splitting, set tail as pNewBlock
+		if (pTail == pBlock)
+			pTail = pNewBlock;	
+	}
+}
+
 void *dalloc(size_t size)
 {
 	size_t total_size;
@@ -70,24 +98,25 @@ void *dalloc(size_t size)
 	size_t aligned_size = ALIGN(size);
 	total_size = sizeof(header_t) + aligned_size;
 
-
 	// Search in the free list for recycled space
-	if ((pHeader = get_free_block(aligned_size)) != NULL) {
-		// Found available space in free list
-		pHeader->data.is_free = 0;
-		return (void*)(pHeader + 1);
+	pHeader = get_free_block(aligned_size);
+
+	// If there is no available space in free list as large as the user requested
+	if (!pHeader) {		
+        coalesce(); // Merge free adjacent spaces
+        pHeader = get_free_block(aligned_size); // Request again
 	}
 
-	coalesce();
-
-	// Search in the free list for recycled space
-	if ((pHeader = get_free_block(aligned_size)) != NULL) {
-		// Found available space in free list
-		pHeader->data.is_free = 0;
-		return (void*)(pHeader + 1);
+	// Found available space in free list
+	if (pHeader) {
+		// Split it if it is much bigger than the requested size
+		split_block(pHeader, aligned_size);
+		pHeader->data.is_free = 0;	// set it as not-free
+		
+		return (void*)(pHeader + 1);	// Return this block to the user who requested it
 	}
 
-	// If there is no available space in free list, request it from OS using sbrk() sys-call
+	// If there is still no available space in free list, request it from OS using sbrk() syscall
 	if ((pBlock = sbrk(total_size)) == (void *) -1)
 		return NULL;
 
