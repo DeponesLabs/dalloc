@@ -14,7 +14,7 @@ void *worker_routine(void *arg)
 	printf("Thread %d started.\n", id);
 
 	for (int i = 0; i < ITERATION_COUNT; ++i) {
-		// 1. Request random size space
+		// Request random size space
 		size_t size = (rand() % 64) + 16;	// Between 16 and 80
 		int *pData = (int *)dalloc(size);
 
@@ -23,14 +23,14 @@ void *worker_routine(void *arg)
 			pthread_exit(NULL);
 		}
 		
-		// 2. Write data. 
+		// Write data. 
 		// If there is any conflict, data will be corrupted.
 		*pData = id * 1000 + i;	// Unique data
 
 		// To increase 'race condition'
 		usleep(10);
 
-		// 3. Recursive Mutex Test (Dreallock)
+		// Recursive Mutex Test (Dreallock)
 		// Make the block very large so that it becomes a "Relocation". 
 		// dalloc is called internally during relocation. 
 		// If the Recursive Mutex is not working, a deadlock will occur here, and the program will freeze.
@@ -43,13 +43,13 @@ void *worker_routine(void *arg)
 			pthread_exit(NULL);
 		}
 
-		// 4. Read: Check the data (Is it still what we wrote?)
+		// Read: Check the data (Is it still what we wrote?)
 		if (*pNewData != id * 1000 + i) {
 			fprintf(stderr, "Fatal Error: Thread #%d data is corrupted! (Race Condition)", id);
 			exit(1);
 		}
 
-		// 5. Free it.
+		// Free it.
 		dfree(pNewData);
 	}
 

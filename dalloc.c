@@ -8,23 +8,6 @@
 
 static pthread_mutex_t global_malloc_lock;
 
-/*
-void dalloc_init() 
-{
-    pthread_mutexattr_t attr;
-    
-    pthread_mutexattr_init(&attr);
-    // Recursive (iç içe kilitlenebilir) yapıyoruz
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    
-    pthread_mutex_init(&global_malloc_lock, &attr);
-    
-    // Çalıştığını görmek için bir iz bırakalım
-    // printf("DEBUG: dalloc_init() calisti. Kilit hazir.\n"); 
-}
-*/
-
-
 // ***********************************************************************
 // Cross-Platform Constructor Macros
 // ***********************************************************************

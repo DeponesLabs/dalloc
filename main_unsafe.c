@@ -6,11 +6,11 @@ int main()
 {
 	printf("--- dalloc Stage 0 Test ---\n ");
 
-	// 1. Allocate 10 byte
+	// Allocate 10 byte
 	void *p1 = dalloc(10);
 	printf("Address of p1: %p (Size: 10)\n", p1);
 
-	// 2. Allocate 20 byte
+	// Allocate 20 byte
 	void *p2 = dalloc(20);
 	printf("Address of p2: %p (Size: 20)\n", p2);
 
