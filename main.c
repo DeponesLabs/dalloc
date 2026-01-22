@@ -9,11 +9,11 @@ int main()
     // *******************************************************************
 	printf("*** dalloc Stage 1 Test ***\n ");
 
-	// 1. Allocate 10 byte
+	// Allocate 10 byte
 	void *p1 = dalloc(10);
 	printf("Address of p1: %p (Size: 10)\n", p1);
 
-	// 2. Allocate 20 byte
+	// Allocate 20 byte
 	void *p2 = dalloc(20);
 	printf("Address of p2: %p (Size: 20)\n", p2);
 
@@ -37,12 +37,12 @@ int main()
     // *******************************************************************
 	printf("*** dalloc Stage 2: Free & Reuse ***\n");
 
-	// 1. Allocate spaces (Use previous pointers or new ones)
+	// Allocate spaces (Use previous pointers or new ones)
 	// p1 was 10 bytes. Let's free it. (Check Stage 1 for p1 initialization)
 	printf("--- Free p1 ---\n");
 	dfree(p1);
 
-	// 2. Request 10 bytes again
+	// Request 10 bytes again
     // Expectation: dalloc should provide the old p1 address instead of a new one
     void *p3 = dalloc(10);
     printf("3. Alloc p3: %p\n", p3);

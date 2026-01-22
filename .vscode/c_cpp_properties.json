@@ -1,6 +1,7 @@
 {
   "configurations": [
     {
+<<<<<<< HEAD
       "name": "linux-gcc-x64",
       "includePath": [
         "${workspaceFolder}/**"
@@ -9,6 +10,16 @@
       "cStandard": "${default}",
       "cppStandard": "${default}",
       "intelliSenseMode": "linux-gcc-x64",
+=======
+      "name": "windows-gcc-x64",
+      "includePath": [
+        "${workspaceFolder}/**"
+      ],
+      "compilerPath": "C:/mingw64/bin/gcc.exe",
+      "cStandard": "${default}",
+      "cppStandard": "${default}",
+      "intelliSenseMode": "windows-gcc-x64",
+>>>>>>> 0f9d405da6552f692881cc34b7a75e0c71258eef
       "compilerArgs": [
         ""
       ]
