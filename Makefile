@@ -6,6 +6,9 @@ CC = gcc
 # -Wall : warn all
 CFLAGS = -g -Wall -Wextra -pthread -Wno-misleading-indentation
 
+# Virtual Targets (Prevents file name conflicts)
+.PHONY: all clean
+
 # Rule
 all: dalloc hack_demo thread_test
 
