@@ -1,1 +1,7 @@
 *.o
+
+// Binary Files
+dalloc
+hack_demo
+thread_test
+
