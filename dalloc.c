@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <unistd.h>
 #include <string.h> // memset etc..
 #include <stdint.h>	// for SIZE_MAX (or <limits.h>)
